@@ -1,0 +1,14 @@
+---
+- hosts: web
+  remote_user: servervm
+  become: yes
+  become_method: sudo
+  roles:
+    - web
+
+- hosts: ddbb
+  remote_user: servervm
+  become: yes
+  become_method: sudo
+  roles:
+    - ddbb

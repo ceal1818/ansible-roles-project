@@ -1,0 +1,70 @@
+---
+- name: Instalando Apache Web Server
+  apt: name={{ item }} state=latest update_cache=true
+  with_items:
+    - php7.0
+    - apache2
+    - libapache2-mod-php7.0
+    - php7.0-mysql
+    - php7.0-curl 
+    - php7.0-gd 
+    - php7.0-intl 
+    - php-pear 
+    - php-imagick 
+    - php7.0-imap 
+    - php7.0-mcrypt 
+    - php-memcache 
+    - php7.0-pspell 
+    - php7.0-recode 
+    - php7.0-sqlite3 
+    - php7.0-tidy 
+    - php7.0-xmlrpc 
+    - php7.0-xsl 
+    - php7.0-mbstring 
+    - php-gettext
+    - mysql-client
+
+- name: Habilitando el módulo mod_rewrite
+  apache2_module: name=rewrite state=present
+  notify:
+    - Reiniciando apache
+
+- name: Habilitando módulo pdo_mysql
+  command: phpenmod pdo_mysql
+  notify:
+    - Reiniciando apache
+
+- name: Deshabilitamos el virtualhost por defecto con el comando a2dissite
+  command: a2dissite 000-default.conf
+  args:
+    creates: /etc/apache2/sites-available/{{ domain }}.conf
+  notify:
+    - Reiniciando apache
+
+- name: Creando un fichero virtualhost para example.com
+  template: src=virtualhost.conf dest=/etc/apache2/sites-available/{{ domain }}.conf
+
+- name: Ejecutar el comando a2ensite
+  command: a2ensite {{ domain }}
+  notify:
+    - Reiniciando apache
+
+- name: Creando el directorio /var/www/{{ domain }}, sino existe.
+  file: path=/var/www/{{ domain }} state=directory
+
+- name: Copiamos el fichero index.html en /var/www/{{ domain }}
+  copy: src=index.html dest=/var/www/{{ domain }}/
+
+- name: Copiamos el fichero index.php en /var/www/{{ domain }}
+  copy: src=index.php dest=/var/www/{{ domain }}/
+
+- name: Deshabilitamos el virtualhost por defecto con el comando a2dissite
+  command: a2dissite 000-default.conf
+  args:
+    creates: /etc/apache2/sites-available/{{ domain }}.conf
+
+- name: Añadir en /etc/hosts el acceso local a http://example.com
+  lineinfile: path=/etc/hosts regexp='^192\.168\.1\.144' line='192.168.1.144 example.com'
+  notify:
+    - Reiniciando apache
+
